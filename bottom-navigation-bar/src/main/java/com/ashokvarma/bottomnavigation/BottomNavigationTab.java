@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +37,7 @@ abstract class BottomNavigationTab extends FrameLayout {
     protected int mPosition;
     protected int mActiveColor;
     protected int mInActiveColor;
+    protected int mLabelInActiveColor;
     protected int mBackgroundColor;
     protected int mActiveWidth;
     protected int mInActiveWidth;
@@ -121,7 +123,19 @@ abstract class BottomNavigationTab extends FrameLayout {
 
     public void setInactiveColor(int inActiveColor) {
         mInActiveColor = inActiveColor;
-        labelView.setTextColor(inActiveColor);
+        if (mLabelInActiveColor == 0) {
+            mLabelInActiveColor = inActiveColor;
+        }
+//        labelView.setTextColor(mLabelInActiveColor);
+    }
+
+    public void setLabelInActiveColor(int labelInActiveColor) {
+        if (labelInActiveColor == 0) {
+            mLabelInActiveColor = mInActiveColor;
+        } else  {
+            mLabelInActiveColor = labelInActiveColor;
+        }
+        labelView.setTextColor(mLabelInActiveColor);
     }
 
     public void setItemBackgroundColor(int backgroundColor) {
@@ -184,7 +198,7 @@ abstract class BottomNavigationTab extends FrameLayout {
         animator.setDuration(animationDuration);
         animator.start();
 
-        labelView.setTextColor(mInActiveColor);
+        labelView.setTextColor(mLabelInActiveColor);
         iconView.setSelected(false);
 
         if (badgeItem != null) {

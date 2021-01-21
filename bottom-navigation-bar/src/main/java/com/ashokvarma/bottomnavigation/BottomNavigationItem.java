@@ -5,14 +5,14 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 
+import com.ashokvarma.bottomnavigation.utils.Utils;
+
 import androidx.annotation.ColorRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
-
-import com.ashokvarma.bottomnavigation.utils.Utils;
 
 /**
  * Class description : Holds data for tabs (i.e data structure which holds all data to paint a tab)
@@ -40,6 +40,10 @@ public class BottomNavigationItem {
     private int mInActiveColorResource;
     private String mInActiveColorCode;
     private int mInActiveColor;
+
+    private int mLabelInActiveColorResource;
+    private String mLabelInActiveColorCode;
+    private int mLabelInActiveColor;
 
     private BadgeItem mBadgeItem;
 
@@ -145,6 +149,15 @@ public class BottomNavigationItem {
     }
 
     /**
+     * @param colorResource resource for in-active color
+     * @return this, to allow builder pattern
+     */
+    public BottomNavigationItem setLabelInActiveColorResource(@ColorRes int colorResource) {
+        this.mLabelInActiveColorResource = colorResource;
+        return this;
+    }
+
+    /**
      * @param colorCode color code for in-active color
      * @return this, to allow builder pattern
      */
@@ -154,11 +167,29 @@ public class BottomNavigationItem {
     }
 
     /**
+     * @param colorCode color code for in-active color
+     * @return this, to allow builder pattern
+     */
+    public BottomNavigationItem setLabelInActiveColor(@Nullable String colorCode) {
+        this.mLabelInActiveColorCode = colorCode;
+        return this;
+    }
+
+    /**
      * @param color in-active color
      * @return this, to allow builder pattern
      */
     public BottomNavigationItem setInActiveColor(int color) {
         this.mInActiveColor = color;
+        return this;
+    }
+
+    /**
+     * @param color in-active color
+     * @return this, to allow builder pattern
+     */
+    public BottomNavigationItem setLabelInActiveColor(int color) {
+        this.mLabelInActiveColor = color;
         return this;
     }
 
@@ -254,6 +285,22 @@ public class BottomNavigationItem {
             return Color.parseColor(mInActiveColorCode);
         } else if (this.mInActiveColor != 0) {
             return mInActiveColor;
+        } else {
+            return Utils.NO_COLOR;
+        }
+    }
+
+    /**
+     * @param context to fetch color
+     * @return in-active color (or) -1 if no color is specified
+     */
+    int getLabelInActiveColor(Context context) {
+        if (this.mLabelInActiveColorResource != 0) {
+            return ContextCompat.getColor(context, mLabelInActiveColorResource);
+        } else if (!TextUtils.isEmpty(mLabelInActiveColorCode)) {
+            return Color.parseColor(mLabelInActiveColorCode);
+        } else if (this.mLabelInActiveColor != 0) {
+            return mLabelInActiveColor;
         } else {
             return Utils.NO_COLOR;
         }

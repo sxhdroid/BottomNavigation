@@ -23,7 +23,7 @@
             android:contentDescription="@string/icon"
             android:layout_gravity="center"
             android:gravity="center"
-            android:scaleType="fitXY" />
+            android:scaleType="centerInside" />
 
         <com.ashokvarma.bottomnavigation.BadgeTextView
             android:id="@+id/fixed_bottom_navigation_badge"

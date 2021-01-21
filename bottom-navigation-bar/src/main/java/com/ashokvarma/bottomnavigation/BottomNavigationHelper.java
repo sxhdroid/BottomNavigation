@@ -121,6 +121,7 @@ class BottomNavigationHelper {
 
         int activeColor = bottomNavigationItem.getActiveColor(context);
         int inActiveColor = bottomNavigationItem.getInActiveColor(context);
+        int labelInActiveColor = bottomNavigationItem.getLabelInActiveColor(context);
 
         if (activeColor != Utils.NO_COLOR) {
             bottomNavigationTab.setActiveColor(activeColor);
@@ -132,6 +133,10 @@ class BottomNavigationHelper {
             bottomNavigationTab.setInactiveColor(inActiveColor);
         } else {
             bottomNavigationTab.setInactiveColor(bottomNavigationBar.getInActiveColor());
+        }
+
+        if (labelInActiveColor != Utils.NO_COLOR) {
+            bottomNavigationTab.setLabelInActiveColor(labelInActiveColor);
         }
 
         if (bottomNavigationItem.isInActiveIconAvailable()) {
