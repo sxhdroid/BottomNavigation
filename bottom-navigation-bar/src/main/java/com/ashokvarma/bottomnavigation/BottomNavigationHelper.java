@@ -5,11 +5,11 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.view.View;
 import android.view.ViewAnimationUtils;
-import android.widget.FrameLayout;
+
+import com.ashokvarma.bottomnavigation.utils.Utils;
 
 /**
  * Class description : This is utils class specific for this library, most the common code goes here.
@@ -32,7 +32,7 @@ class BottomNavigationHelper {
      * @param scrollable  is bottom bar scrollable
      * @return width of each tab
      */
-    public static int[] getMeasurementsForFixedMode(Context context, int screenWidth, int noOfTabs, boolean scrollable) {
+    static int[] getMeasurementsForFixedMode(Context context, int screenWidth, int noOfTabs, boolean scrollable) {
 
         int[] result = new int[2];
 
@@ -61,7 +61,7 @@ class BottomNavigationHelper {
      * @param scrollable  is bottom bar scrollable
      * @return min and max width of each tab
      */
-    public static int[] getMeasurementsForShiftingMode(Context context, int screenWidth, int noOfTabs, boolean scrollable) {
+    static int[] getMeasurementsForShiftingMode(Context context, int screenWidth, int noOfTabs, boolean scrollable) {
 
         int[] result = new int[2];
 
@@ -112,7 +112,7 @@ class BottomNavigationHelper {
      * @param bottomNavigationTab  view to which data need to be set
      * @param bottomNavigationBar  view which holds all the tabs
      */
-    public static void bindTabWithData(BottomNavigationItem bottomNavigationItem, BottomNavigationTab bottomNavigationTab, BottomNavigationBar bottomNavigationBar) {
+    static void bindTabWithData(BottomNavigationItem bottomNavigationItem, BottomNavigationTab bottomNavigationTab, BottomNavigationBar bottomNavigationBar) {
 
         Context context = bottomNavigationBar.getContext();
 
@@ -122,13 +122,13 @@ class BottomNavigationHelper {
         int activeColor = bottomNavigationItem.getActiveColor(context);
         int inActiveColor = bottomNavigationItem.getInActiveColor(context);
 
-        if (activeColor != -1) {
+        if (activeColor != Utils.NO_COLOR) {
             bottomNavigationTab.setActiveColor(activeColor);
         } else {
             bottomNavigationTab.setActiveColor(bottomNavigationBar.getActiveColor());
         }
 
-        if (inActiveColor != -1) {
+        if (inActiveColor != Utils.NO_COLOR) {
             bottomNavigationTab.setInactiveColor(inActiveColor);
         } else {
             bottomNavigationTab.setInactiveColor(bottomNavigationBar.getInActiveColor());
@@ -143,44 +143,10 @@ class BottomNavigationHelper {
 
         bottomNavigationTab.setItemBackgroundColor(bottomNavigationBar.getBackgroundColor());
 
-        setBadgeForTab(bottomNavigationItem.getBadgeItem(), bottomNavigationTab);
-    }
-
-    /**
-     * Used to set badge for given tab
-     *
-     * @param badgeItem           holds badge data
-     * @param bottomNavigationTab bottom navigation tab to which badge needs to be attached
-     */
-    private static void setBadgeForTab(BadgeItem badgeItem, BottomNavigationTab bottomNavigationTab) {
+        BadgeItem badgeItem = bottomNavigationItem.getBadgeItem();
         if (badgeItem != null) {
-
-            Context context = bottomNavigationTab.getContext();
-
-            GradientDrawable shape = getBadgeDrawable(badgeItem, context);
-            bottomNavigationTab.badgeView.setBackgroundDrawable(shape);
-
-            bottomNavigationTab.setBadgeItem(badgeItem);
-            badgeItem.setTextView(bottomNavigationTab.badgeView);
-            bottomNavigationTab.badgeView.setVisibility(View.VISIBLE);
-
-            bottomNavigationTab.badgeView.setTextColor(badgeItem.getTextColor(context));
-            bottomNavigationTab.badgeView.setText(badgeItem.getText());
-
-
-            FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) bottomNavigationTab.badgeView.getLayoutParams();
-            layoutParams.gravity = badgeItem.getGravity();
-            bottomNavigationTab.badgeView.setLayoutParams(layoutParams);
+            badgeItem.bindToBottomTab(bottomNavigationTab);
         }
-    }
-
-    static GradientDrawable getBadgeDrawable(BadgeItem badgeItem, Context context) {
-        GradientDrawable shape = new GradientDrawable();
-        shape.setShape(GradientDrawable.RECTANGLE);
-        shape.setCornerRadius(context.getResources().getDimensionPixelSize(R.dimen.badge_corner_radius));
-        shape.setColor(badgeItem.getBackgroundColor(context));
-        shape.setStroke(badgeItem.getBorderWidth(), badgeItem.getBorderColor(context));
-        return shape;
     }
 
     /**
@@ -192,8 +158,8 @@ class BottomNavigationHelper {
      * @param newColor          the new color i.e ripple color
      * @param animationDuration duration for which animation runs
      */
-    public static void setBackgroundWithRipple(View clickedView, final View backgroundView,
-                                               final View bgOverlay, final int newColor, int animationDuration) {
+    static void setBackgroundWithRipple(View clickedView, final View backgroundView,
+                                        final View bgOverlay, final int newColor, int animationDuration) {
         int centerX = (int) (clickedView.getX() + (clickedView.getMeasuredWidth() / 2));
         int centerY = clickedView.getMeasuredHeight() / 2;
         int finalRadius = backgroundView.getWidth();

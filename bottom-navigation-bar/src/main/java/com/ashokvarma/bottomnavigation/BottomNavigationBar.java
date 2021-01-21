@@ -5,13 +5,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Build;
-import android.support.annotation.ColorRes;
-import android.support.annotation.IntDef;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewCompat;
-import android.support.v4.view.ViewPropertyAnimatorCompat;
-import android.support.v4.view.animation.LinearOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,8 +14,18 @@ import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import androidx.annotation.ColorRes;
+import androidx.annotation.IntDef;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewPropertyAnimatorCompat;
+import androidx.interpolator.view.animation.LinearOutSlowInInterpolator;
+
+import com.ashokvarma.bottomnavigation.behaviour.BottomNavBarFabBehaviour;
 import com.ashokvarma.bottomnavigation.behaviour.BottomVerticalScrollBehavior;
 import com.ashokvarma.bottomnavigation.utils.Utils;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -44,10 +47,12 @@ public class BottomNavigationBar extends FrameLayout {
     public static final int MODE_DEFAULT = 0;
     public static final int MODE_FIXED = 1;
     public static final int MODE_SHIFTING = 2;
+    public static final int MODE_FIXED_NO_TITLE = 3;
+    public static final int MODE_SHIFTING_NO_TITLE = 4;
 
-    @IntDef({MODE_DEFAULT, MODE_FIXED, MODE_SHIFTING})
+    @IntDef({MODE_DEFAULT, MODE_FIXED, MODE_SHIFTING, MODE_FIXED_NO_TITLE, MODE_SHIFTING_NO_TITLE})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface Mode {
+    @interface Mode {
     }
 
     public static final int BACKGROUND_STYLE_DEFAULT = 0;
@@ -56,7 +61,17 @@ public class BottomNavigationBar extends FrameLayout {
 
     @IntDef({BACKGROUND_STYLE_DEFAULT, BACKGROUND_STYLE_STATIC, BACKGROUND_STYLE_RIPPLE})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface BackgroundStyle {
+    @interface BackgroundStyle {
+    }
+
+
+    private static final int FAB_BEHAVIOUR_TRANSLATE_AND_STICK = 0;
+    private static final int FAB_BEHAVIOUR_DISAPPEAR = 1;
+    private static final int FAB_BEHAVIOUR_TRANSLATE_OUT = 2;
+
+    @IntDef({FAB_BEHAVIOUR_TRANSLATE_AND_STICK, FAB_BEHAVIOUR_DISAPPEAR, FAB_BEHAVIOUR_TRANSLATE_OUT})
+    @Retention(RetentionPolicy.SOURCE)
+    @interface FabBehaviour {
     }
 
     @Mode
@@ -93,6 +108,9 @@ public class BottomNavigationBar extends FrameLayout {
     private int mRippleAnimationDuration = (int) (DEFAULT_ANIMATION_DURATION * 2.5);
 
     private float mElevation;
+
+    private boolean mAutoHideEnabled;
+    private boolean mIsHidden = false;
 
     ///////////////////////////////////////////////////////////////////////////
     // View Default Constructors and Methods
@@ -133,6 +151,7 @@ public class BottomNavigationBar extends FrameLayout {
             mActiveColor = typedArray.getColor(R.styleable.BottomNavigationBar_bnbActiveColor, Utils.fetchContextColor(context, R.attr.colorAccent));
             mInActiveColor = typedArray.getColor(R.styleable.BottomNavigationBar_bnbInactiveColor, Color.LTGRAY);
             mBackgroundColor = typedArray.getColor(R.styleable.BottomNavigationBar_bnbBackgroundColor, Color.WHITE);
+            mAutoHideEnabled = typedArray.getBoolean(R.styleable.BottomNavigationBar_bnbAutoHideEnabled, true);
             mElevation = typedArray.getDimension(R.styleable.BottomNavigationBar_bnbElevation, getResources().getDimension(R.dimen.bottom_navigation_elevation));
 
             setAnimationDuration(typedArray.getInt(R.styleable.BottomNavigationBar_bnbAnimationDuration, DEFAULT_ANIMATION_DURATION));
@@ -144,6 +163,14 @@ public class BottomNavigationBar extends FrameLayout {
 
                 case MODE_SHIFTING:
                     mMode = MODE_SHIFTING;
+                    break;
+
+                case MODE_FIXED_NO_TITLE:
+                    mMode = MODE_FIXED_NO_TITLE;
+                    break;
+
+                case MODE_SHIFTING_NO_TITLE:
+                    mMode = MODE_SHIFTING_NO_TITLE;
                     break;
 
                 case MODE_DEFAULT:
@@ -188,9 +215,9 @@ public class BottomNavigationBar extends FrameLayout {
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View parentView = inflater.inflate(R.layout.bottom_navigation_bar_container, this, true);
-        mBackgroundOverlay = (FrameLayout) parentView.findViewById(R.id.bottom_navigation_bar_overLay);
-        mContainer = (FrameLayout) parentView.findViewById(R.id.bottom_navigation_bar_container);
-        mTabContainer = (LinearLayout) parentView.findViewById(R.id.bottom_navigation_bar_item_container);
+        mBackgroundOverlay = parentView.findViewById(R.id.bottom_navigation_bar_overLay);
+        mContainer = parentView.findViewById(R.id.bottom_navigation_bar_container);
+        mTabContainer = parentView.findViewById(R.id.bottom_navigation_bar_item_container);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             this.setOutlineProvider(ViewOutlineProvider.BOUNDS);
@@ -316,7 +343,7 @@ public class BottomNavigationBar extends FrameLayout {
     }
 
     /**
-     * will be public once all bugs are ressolved.
+     * will be public once all bugs are resolved.
      */
     private BottomNavigationBar setScrollable(boolean scrollable) {
         mScrollable = scrollable;
@@ -332,6 +359,9 @@ public class BottomNavigationBar extends FrameLayout {
      * This method will take all changes in to consideration and redraws tabs.
      */
     public void initialise() {
+        mSelectedPosition = DEFAULT_SELECTED_POSITION;
+        mBottomNavigationTabs.clear();
+
         if (!mBottomNavigationItems.isEmpty()) {
             mTabContainer.removeAllViews();
             if (mMode == MODE_DEFAULT) {
@@ -350,23 +380,23 @@ public class BottomNavigationBar extends FrameLayout {
             }
 
             if (mBackgroundStyle == BACKGROUND_STYLE_STATIC) {
-                mBackgroundOverlay.setBackgroundColor(mBackgroundColor);
+                mBackgroundOverlay.setVisibility(View.GONE);
                 mContainer.setBackgroundColor(mBackgroundColor);
             }
 
             int screenWidth = Utils.getScreenWidth(getContext());
 
-            if (mMode == MODE_FIXED) {
+            if (mMode == MODE_FIXED || mMode == MODE_FIXED_NO_TITLE) {
 
                 int[] widths = BottomNavigationHelper.getMeasurementsForFixedMode(getContext(), screenWidth, mBottomNavigationItems.size(), mScrollable);
                 int itemWidth = widths[0];
 
                 for (BottomNavigationItem currentItem : mBottomNavigationItems) {
                     FixedBottomNavigationTab bottomNavigationTab = new FixedBottomNavigationTab(getContext());
-                    setUpTab(bottomNavigationTab, currentItem, itemWidth, itemWidth);
+                    setUpTab(mMode == MODE_FIXED_NO_TITLE, bottomNavigationTab, currentItem, itemWidth, itemWidth);
                 }
 
-            } else if (mMode == MODE_SHIFTING) {
+            } else if (mMode == MODE_SHIFTING || mMode == MODE_SHIFTING_NO_TITLE) {
 
                 int[] widths = BottomNavigationHelper.getMeasurementsForShiftingMode(getContext(), screenWidth, mBottomNavigationItems.size(), mScrollable);
 
@@ -375,14 +405,14 @@ public class BottomNavigationBar extends FrameLayout {
 
                 for (BottomNavigationItem currentItem : mBottomNavigationItems) {
                     ShiftingBottomNavigationTab bottomNavigationTab = new ShiftingBottomNavigationTab(getContext());
-                    setUpTab(bottomNavigationTab, currentItem, itemWidth, itemActiveWidth);
+                    setUpTab(mMode == MODE_SHIFTING_NO_TITLE, bottomNavigationTab, currentItem, itemWidth, itemActiveWidth);
                 }
             }
 
             if (mBottomNavigationTabs.size() > mFirstSelectedPosition) {
-                selectTabInternal(mFirstSelectedPosition, true, false);
+                selectTabInternal(mFirstSelectedPosition, true, false, false);
             } else if (!mBottomNavigationTabs.isEmpty()) {
-                selectTabInternal(0, true, false);
+                selectTabInternal(0, true, false, false);
             }
         }
     }
@@ -419,7 +449,7 @@ public class BottomNavigationBar extends FrameLayout {
         mTabContainer.removeAllViews();
         mBottomNavigationTabs.clear();
         mBottomNavigationItems.clear();
-        mBackgroundOverlay.setBackgroundColor(Color.TRANSPARENT);
+        mBackgroundOverlay.setVisibility(View.GONE);
         mContainer.setBackgroundColor(Color.TRANSPARENT);
         mSelectedPosition = DEFAULT_SELECTED_POSITION;
     }
@@ -444,7 +474,7 @@ public class BottomNavigationBar extends FrameLayout {
      * @param callListener should this change call listener callbacks
      */
     public void selectTab(int newPosition, boolean callListener) {
-        selectTabInternal(newPosition, false, callListener);
+        selectTabInternal(newPosition, false, callListener, callListener);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -454,12 +484,14 @@ public class BottomNavigationBar extends FrameLayout {
     /**
      * Internal method to setup tabs
      *
+     * @param isNoTitleMode       if no title mode is required
      * @param bottomNavigationTab Tab item
      * @param currentItem         data structure for tab item
      * @param itemWidth           tab item in-active width
      * @param itemActiveWidth     tab item active width
      */
-    private void setUpTab(BottomNavigationTab bottomNavigationTab, BottomNavigationItem currentItem, int itemWidth, int itemActiveWidth) {
+    private void setUpTab(boolean isNoTitleMode, BottomNavigationTab bottomNavigationTab, BottomNavigationItem currentItem, int itemWidth, int itemActiveWidth) {
+        bottomNavigationTab.setIsNoTitleMode(isNoTitleMode);
         bottomNavigationTab.setInactiveWidth(itemWidth);
         bottomNavigationTab.setActiveWidth(itemActiveWidth);
         bottomNavigationTab.setPosition(mBottomNavigationItems.indexOf(currentItem));
@@ -468,7 +500,7 @@ public class BottomNavigationBar extends FrameLayout {
             @Override
             public void onClick(View v) {
                 BottomNavigationTab bottomNavigationTabView = (BottomNavigationTab) v;
-                selectTabInternal(bottomNavigationTabView.getPosition(), false, true);
+                selectTabInternal(bottomNavigationTabView.getPosition(), false, true, false);
             }
         });
 
@@ -484,11 +516,12 @@ public class BottomNavigationBar extends FrameLayout {
     /**
      * Internal Method to select a tab
      *
-     * @param newPosition  to select a tab after bottom navigation bar is initialised
-     * @param firstTab     if firstTab the no ripple animation will be done
-     * @param callListener is listener callbacks enabled for this change
+     * @param newPosition     to select a tab after bottom navigation bar is initialised
+     * @param firstTab        if firstTab the no ripple animation will be done
+     * @param callListener    is listener callbacks enabled for this change
+     * @param forcedSelection if bottom navigation bar forced to select tab (in this case call on selected irrespective of previous state
      */
-    private void selectTabInternal(int newPosition, boolean firstTab, boolean callListener) {
+    private void selectTabInternal(int newPosition, boolean firstTab, boolean callListener, boolean forcedSelection) {
         int oldPosition = mSelectedPosition;
         if (mSelectedPosition != newPosition) {
             if (mBackgroundStyle == BACKGROUND_STYLE_STATIC) {
@@ -523,25 +556,30 @@ public class BottomNavigationBar extends FrameLayout {
         }
 
         if (callListener) {
-            sendListenerCall(oldPosition, newPosition);
+            sendListenerCall(oldPosition, newPosition, forcedSelection);
         }
     }
 
     /**
      * Internal method used to send callbacks to listener
      *
-     * @param oldPosition old selected tab position, -1 if this is first call
-     * @param newPosition newly selected tab position
+     * @param oldPosition     old selected tab position, -1 if this is first call
+     * @param newPosition     newly selected tab position
+     * @param forcedSelection if bottom navigation bar forced to select tab (in this case call on selected irrespective of previous state
      */
-    private void sendListenerCall(int oldPosition, int newPosition) {
+    private void sendListenerCall(int oldPosition, int newPosition, boolean forcedSelection) {
         if (mTabSelectedListener != null) {
 //                && oldPosition != -1) {
-            if (oldPosition == newPosition) {
-                mTabSelectedListener.onTabReselected(newPosition);
-            } else {
+            if (forcedSelection) {
                 mTabSelectedListener.onTabSelected(newPosition);
-                if (oldPosition != -1) {
-                    mTabSelectedListener.onTabUnselected(oldPosition);
+            } else {
+                if (oldPosition == newPosition) {
+                    mTabSelectedListener.onTabReselected(newPosition);
+                } else {
+                    mTabSelectedListener.onTabSelected(newPosition);
+                    if (oldPosition != -1) {
+                        mTabSelectedListener.onTabUnselected(oldPosition);
+                    }
                 }
             }
         }
@@ -550,6 +588,26 @@ public class BottomNavigationBar extends FrameLayout {
     ///////////////////////////////////////////////////////////////////////////
     // Animating methods
     ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * show BottomNavigationBar if it is hidden and hide if it is shown
+     */
+    public void toggle() {
+        toggle(true);
+    }
+
+    /**
+     * show BottomNavigationBar if it is hidden and hide if it is shown
+     *
+     * @param animate is animation enabled for toggle
+     */
+    public void toggle(boolean animate) {
+        if (mIsHidden) {
+            show(animate);
+        } else {
+            hide(animate);
+        }
+    }
 
     /**
      * hide with animation
@@ -562,20 +620,22 @@ public class BottomNavigationBar extends FrameLayout {
      * @param animate is animation enabled for hide
      */
     public void hide(boolean animate) {
+        mIsHidden = true;
         setTranslationY(this.getHeight(), animate);
     }
 
     /**
-     * unHide with animation
+     * show with animation
      */
-    public void unHide() {
-        unHide(true);
+    public void show() {
+        show(true);
     }
 
     /**
-     * @param animate is animation enabled for unHide
+     * @param animate is animation enabled for show
      */
-    public void unHide(boolean animate) {
+    public void show(boolean animate) {
+        mIsHidden = false;
         setTranslationY(0, animate);
     }
 
@@ -596,7 +656,7 @@ public class BottomNavigationBar extends FrameLayout {
 
     /**
      * Internal Method
-     * <p/>
+     * <p>
      * used to set animation and
      * takes care of cancelling current animation
      * and sets duration and interpolator for animation
@@ -612,6 +672,41 @@ public class BottomNavigationBar extends FrameLayout {
             mTranslationAnimator.cancel();
         }
         mTranslationAnimator.translationY(offset).start();
+    }
+
+    public boolean isHidden() {
+        return mIsHidden;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Behaviour Handing Handling
+    ///////////////////////////////////////////////////////////////////////////
+
+    public boolean isAutoHideEnabled() {
+        return mAutoHideEnabled;
+    }
+
+    public void setAutoHideEnabled(boolean mAutoHideEnabled) {
+        this.mAutoHideEnabled = mAutoHideEnabled;
+    }
+
+    public void setFab(FloatingActionButton fab) {
+        ViewGroup.LayoutParams layoutParams = fab.getLayoutParams();
+        if (layoutParams != null && layoutParams instanceof CoordinatorLayout.LayoutParams) {
+            CoordinatorLayout.LayoutParams coLayoutParams = (CoordinatorLayout.LayoutParams) layoutParams;
+            BottomNavBarFabBehaviour bottomNavBarFabBehaviour = new BottomNavBarFabBehaviour();
+            coLayoutParams.setBehavior(bottomNavBarFabBehaviour);
+        }
+    }
+
+    // scheduled for next
+    private void setFab(FloatingActionButton fab, @FabBehaviour int fabBehaviour) {
+        ViewGroup.LayoutParams layoutParams = fab.getLayoutParams();
+        if (layoutParams != null && layoutParams instanceof CoordinatorLayout.LayoutParams) {
+            CoordinatorLayout.LayoutParams coLayoutParams = (CoordinatorLayout.LayoutParams) layoutParams;
+            BottomNavBarFabBehaviour bottomNavBarFabBehaviour = new BottomNavBarFabBehaviour();
+            coLayoutParams.setBehavior(bottomNavBarFabBehaviour);
+        }
     }
 
 

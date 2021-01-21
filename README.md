@@ -31,157 +31,27 @@ Download [the latest JAR][mavenAarDownload] or grab via Maven:
 <dependency>
   <groupId>com.ashokvarma.android</groupId>
   <artifactId>bottom-navigation-bar</artifactId>
-  <version>1.2.1</version>
+  <version>2.2.0</version>
   <type>pom</type>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'com.ashokvarma.android:bottom-navigation-bar:1.2.1'
+implementation 'com.ashokvarma.android:bottom-navigation-bar:2.2.0'
 ```
 or Ivy:
 ```xml
-<dependency org='com.ashokvarma.android' name='bottom-navigation-bar' rev='1.2.1'>
-  <artifact name='$AID' ext='pom'></artifact>
+<dependency org='com.ashokvarma.android' name='bottom-navigation-bar' rev='2.2.0'>
+  <artifact name='$AID' ext='pom'/>
 </dependency>
 ```
-## Usage
 
-### Basic setup
+## For Usage Docs [Visit Wiki][wikiLink]
 
-**in your activity xml :**
-
-```xml
-    <com.ashokvarma.bottomnavigation.BottomNavigationBar
-        android:layout_gravity="bottom"
-        android:id="@+id/bottom_navigation_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-```
-
-**In your class**
-```java
-BottomNavigationBar bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
-
-bottomNavigationBar
-                .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "Home"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_book_white_24dp, "Books"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_music_note_white_24dp, "Music"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_tv_white_24dp, "Movies & TV"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_videogame_asset_white_24dp, "Games"))
-                .initialise();
-```
-
-**Add TabSelectedListener**
-```java
-        bottomNavigationBar.setTabSelectedListener(new BottomNavigationBar.OnTabSelectedListener(){
-            @Override
-            public void onTabSelected(int position) {
-            }
-            @Override
-            public void onTabUnselected(int position) {
-            }
-            @Override
-            public void onTabReselected(int position) {
-            }
-        });
-```
-**all methods are self explanatory**
-
-### BottomNavigationBar Customizations
-
- | MODE_FIXED | MODE_SHIFTING
------------- | ------------ | -------------
-BACKGROUND_STYLE_STATIC | <img src="https://raw.githubusercontent.com/Ashok-Varma/BottomNavigation/master/fixed_static.gif" width="320" height="50" /> | <img src="https://raw.githubusercontent.com/Ashok-Varma/BottomNavigation/master/shift_static.gif" width="320" height="50" />
-BACKGROUND_STYLE_RIPPLE | <img src="https://raw.githubusercontent.com/Ashok-Varma/BottomNavigation/master/fixed_ripple.gif" width="320" height="50" /> | <img src="https://raw.githubusercontent.com/Ashok-Varma/BottomNavigation/master/shift_ripple.gif" width="320" height="50" />
-
-#### 1. Modes
-Attribute: `bnbMode` Values: `mode_default, mode_fixed, mode_shifting`  
-Method: `setMode()`  Values:`MODE_DEFAULT, MODE_FIXED, MODE_SHIFTING`  
-
-##### Code Snippet Example
-**to set mode :**		
- ```java
- bottomNavigationBar
-                 .setMode(BottomNavigationBar.MODE_FIXED)
- ```
-
-**MODE_DEFAULT:** if number of tabs are less than or equal to three then MODE_FIXED will be used other cases MODE_SHIFTING will be used.
-
-#### 2. Background Styles
-  Attribute: `bnbBackgroundStyle` Values: `background_style_default, background_style_static, background_style_ripple`  
-  Method: `setBackgroundStyle()` Values: `BACKGROUND_STYLE_DEFAULT, BACKGROUND_STYLE_STATIC, BACKGROUND_STYLE_RIPPLE`  
-
-##### Code Snippet Example
-**to set background style:**		
- ```java
- bottomNavigationBar
-                 .setBackgroundStyle(BottomNavigationBar.BACKGROUND_STYLE_RIPPLE)		
- ```
-
-**BACKGROUND_STYLE_DEFAULT:** if mode is MODE_FIXED then BACKGROUND_STYLE_STATIC will be used if mode is MODE_SHIFTING then BACKGROUND_STYLE_RIPPLE will be used.
-
-#### 3. Colors
-Attributes: `bnbActiveColor, bnbInactiveColor, bnbBackgroundColor` Value: Color value or resource   
-Methods: `setActiveColor, setInActiveColor, setBarBackgroundColor` Value: Color value or resource   
-
-##### Code Snippet Example
-**to set colors:**	
-```java
- bottomNavigationBar
-                 .setActiveColor(R.color.primary)
-                 .setInActiveColor("#FFFFFF")
-                 .setBarBackgroundColor("#ECECEC")
- ```
-
-**in-active color :** is the icon and text color of the in-active/un-selected tab
-
-**active color :** In BACKGROUND_STYLE_STATIC active color is the icon and text color of the active/selected tab. In BACKGROUND_STYLE_RIPPLE active color is the bottom bar background color (which comes with ripple animation)
-
-**background color :** In BACKGROUND_STYLE_STATIC background color is the bottom bar background color. In BACKGROUND_STYLE_RIPPLE background color is the icon and text color of the active/selected tab.
-
-**Default colors:**  
-1. Theme's Primary Color will be active color.  
-2. Color.LTGRAY will be in-active color.  
-3. Color.WHITE will be background color.  
-
-#### 4. Individual BottomNavigationItem Colors
-
-**set colors to BottomNavigationItem :** if you need different active/in-active colors for different tabs. you can also set active and inactive color for the BottomNavigationItem.
-##### Code Snippet Example
-```java
-        bottomNavigationBar
-                .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "Home").setActiveColor(R.color.orange).setInActiveColor(R.color.teal))
-                .addItem(new BottomNavigationItem(R.drawable.ic_book_white_24dp, "Books").setActiveColor("#FFFF00"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_music_note_white_24dp, "Music").setInActiveColor("#00FFFF"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_tv_white_24dp, "Movies & TV"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_videogame_asset_white_24dp, "Games").setActiveColor(R.color.grey))
-```
-if you didn't set active/in-active colors for the BottomNavigationItem then these will inherited from BottomNavigationBar active/in-active colors respectively
-
-#### 5. Badges 
-
-**add badge to BottomNavigationItem:** you may add a BadgeItem for different tabs.
-
-##### Code Snippet Example
-```java
-     BadgeItem numberBadgeItem = new BadgeItem()
-                .setBorderWidth(4)
-                .setBackgroundColorResource(R.color.blue)
-                .setText("5")
-                .setHideOnSelect(autoHide.isChecked());
-
-     bottomNavigationBar
-                .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "Home").setActiveColorResource(R.color.orange).setBadgeItem(numberBadgeItem))
-```
-
-
-#### 5. Elevation
-Attribute: `bnbElevation` 
-
-You can set elevation to `0dp` if you don't want a shadow or plan to draw your own.
-
-**Default elevation:** `8dp`  
+## Migration from V1 to V2
+1. BadgeItem has been changed to TextBadgeItem
+2. New ShapeBadgeItem implementation changed. [check this page for new api usage](https://github.com/Ashok-Varma/BottomNavigation/wiki/Badges)
+3. hideText replaced with new modes. To use those mode should be set to MODE_FIXED_NO_TITLE / MODE_SHIFTING_NO_TITLE 
 
 ## License
 
@@ -202,7 +72,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
+## Other Open Source Libraries
+1. [Gander](https://github.com/Ashok-Varma/Gander) : Gander is a simple in-app HTTP inspector for Android OkHttp clients. Gander intercepts and persists all HTTP requests and responses inside your application, and provides a UI for inspecting their content.
+2. [SqliteManager](https://github.com/Ashok-Varma/SqliteManager) : Sqlite Manager is a Dev Debug tool that helps to manage(Edit, Add, Clear) your android Sqlite Databases.
+3. [SharedPrefManager](https://github.com/Ashok-Varma/SharedPrefManager) : SharedPref Manager is a Dev Debug tool that helps to manage(Edit, Add, Clear) your android Shared Preferences.
+
+
+ [wikiLink]: https://github.com/Ashok-Varma/BottomNavigation/wiki
  [googlePlayStoreLink]: https://play.google.com/store/apps/details?id=com.ashokvarma.bottomnavigation.sample
  [googlePage]: https://www.google.com/design/spec/components/bottom-navigation.html
- [mavenAarDownload]:  https://repo1.maven.org/maven2/com/ashokvarma/android/bottom-navigation-bar/1.2.1/bottom-navigation-bar-1.2.1.aar
+ [mavenAarDownload]:  https://repo1.maven.org/maven2/com/ashokvarma/android/bottom-navigation-bar/2.2.0/bottom-navigation-bar-2.2.0.aar
  [mavenLatestJarDownload]: https://search.maven.org/remote_content?g=com.ashokvarma.android&a=bottom-navigation-bar&v=LATEST
